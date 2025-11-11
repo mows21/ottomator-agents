@@ -1,0 +1,118 @@
+{
+  "name": "Data Transformation Workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "trigger-node",
+      "name": "When clicking 'Test workflow'",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{data_source_url}}",
+        "options": {}
+      },
+      "id": "fetch-node",
+      "name": "Fetch Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Transform the data\nconst items = $input.all();\nconst transformations = {{transformation_rules}};\n\nconst transformed = items.map(item => {\n  const result = {};\n  \n  // Apply transformation rules\n  for (const [targetKey, sourceKey] of Object.entries(transformations)) {\n    result[targetKey] = item.json[sourceKey];\n  }\n  \n  return result;\n});\n\nreturn transformed;"
+      },
+      "id": "transform-node",
+      "name": "Transform",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "operation": "filter",
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[filter_field]}}",
+              "operation": "notEmpty"
+            }
+          ]
+        }
+      },
+      "id": "filter-node",
+      "name": "Filter Data",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 1,
+      "position": [850, 300]
+    }
+  ],
+  "connections": {
+    "When clicking 'Test workflow'": {
+      "main": [
+        [
+          {
+            "node": "Fetch Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Data": {
+      "main": [
+        [
+          {
+            "node": "Transform",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform": {
+      "main": [
+        [
+          {
+            "node": "Filter Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "metadata": {
+    "description": "Transform and filter JSON data",
+    "category": "data",
+    "parameters": {
+      "data_source_url": {
+        "type": "string",
+        "required": true,
+        "description": "URL to fetch data from"
+      },
+      "transformation_rules": {
+        "type": "object",
+        "required": true,
+        "description": "Mapping of target fields to source fields"
+      },
+      "filter_field": {
+        "type": "string",
+        "required": false,
+        "description": "Field to filter on"
+      }
+    },
+    "tags": ["data", "transformation", "json", "etl"],
+    "use_cases": [
+      "Transform API responses",
+      "Clean and filter data",
+      "Prepare data for import"
+    ]
+  }
+}

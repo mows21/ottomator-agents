@@ -1,0 +1,129 @@
+{
+  "name": "Webhook Receiver Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "={{webhook_path}}",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-node",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "webhook-id-123"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validate and process webhook data\nconst payload = $input.all()[0].json.body;\n\n// Validate required fields\nconst requiredFields = {{required_fields || ['data']}};\nconst missingFields = requiredFields.filter(field => !payload[field]);\n\nif (missingFields.length > 0) {\n  throw new Error(`Missing required fields: ${missingFields.join(', ')}`);\n}\n\n// Process the data\nconst processed = {\n  ...payload,\n  received_at: new Date().toISOString(),\n  webhook_source: '{{webhook_source}}'\n};\n\nreturn [processed];"
+      },
+      "id": "process-node",
+      "name": "Process Webhook",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "table": "{{storage_table}}",
+        "columns": "*",
+        "options": {}
+      },
+      "id": "store-node",
+      "name": "Store Data",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [650, 300],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "PostgreSQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, message: 'Webhook processed' } }}"
+      },
+      "id": "response-node",
+      "name": "Respond",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [850, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Process Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Webhook": {
+      "main": [
+        [
+          {
+            "node": "Store Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store Data": {
+      "main": [
+        [
+          {
+            "node": "Respond",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "metadata": {
+    "description": "Receive and process webhook data",
+    "category": "integration",
+    "parameters": {
+      "webhook_path": {
+        "type": "string",
+        "required": true,
+        "description": "Path for webhook URL"
+      },
+      "webhook_source": {
+        "type": "string",
+        "required": true,
+        "description": "Source of webhook (e.g., 'github', 'stripe')"
+      },
+      "required_fields": {
+        "type": "array",
+        "required": false,
+        "description": "List of required fields in webhook payload"
+      },
+      "storage_table": {
+        "type": "string",
+        "required": true,
+        "description": "Database table to store webhook data"
+      }
+    },
+    "tags": ["webhook", "integration", "api", "receiver"],
+    "use_cases": [
+      "Receive GitHub webhooks",
+      "Process payment notifications",
+      "Handle form submissions"
+    ]
+  }
+}

@@ -1,0 +1,125 @@
+{
+  "name": "Web Scraper Workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "trigger-node",
+      "name": "When clicking 'Test workflow'",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{target_url}}",
+        "options": {}
+      },
+      "id": "html-node",
+      "name": "Fetch HTML",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "dataPropertyName": "html",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "={{selector_key}}",
+              "cssSelector": "={{css_selector}}"
+            }
+          ]
+        }
+      },
+      "id": "html-extract-node",
+      "name": "Extract Data",
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "operation": "limit",
+        "maxItems": "={{max_results || 10}}"
+      },
+      "id": "limit-node",
+      "name": "Limit Results",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [850, 300]
+    }
+  ],
+  "connections": {
+    "When clicking 'Test workflow'": {
+      "main": [
+        [
+          {
+            "node": "Fetch HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch HTML": {
+      "main": [
+        [
+          {
+            "node": "Extract Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Data": {
+      "main": [
+        [
+          {
+            "node": "Limit Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "metadata": {
+    "description": "Scrape and extract data from websites",
+    "category": "data",
+    "parameters": {
+      "target_url": {
+        "type": "string",
+        "required": true,
+        "description": "URL of the website to scrape"
+      },
+      "css_selector": {
+        "type": "string",
+        "required": true,
+        "description": "CSS selector to extract data"
+      },
+      "selector_key": {
+        "type": "string",
+        "required": true,
+        "description": "Key name for extracted data"
+      },
+      "max_results": {
+        "type": "number",
+        "required": false,
+        "description": "Maximum number of results",
+        "default": 10
+      }
+    },
+    "tags": ["scraping", "web", "data", "html"],
+    "use_cases": [
+      "Monitor website changes",
+      "Extract product prices",
+      "Collect news articles"
+    ]
+  }
+}

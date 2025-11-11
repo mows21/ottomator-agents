@@ -1,0 +1,81 @@
+{
+  "name": "Email Notification Workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "start-node",
+      "name": "When clicking 'Test workflow'",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "{{sender_email}}",
+        "toEmail": "{{recipient_email}}",
+        "subject": "{{email_subject}}",
+        "text": "{{email_body}}",
+        "options": {}
+      },
+      "id": "email-node",
+      "name": "Send Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [450, 300],
+      "credentials": {
+        "smtp": {
+          "id": "1",
+          "name": "SMTP account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "When clicking 'Test workflow'": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "metadata": {
+    "description": "Send email notifications",
+    "category": "communication",
+    "parameters": {
+      "sender_email": {
+        "type": "string",
+        "required": true,
+        "description": "Email address of sender"
+      },
+      "recipient_email": {
+        "type": "string",
+        "required": true,
+        "description": "Email address of recipient"
+      },
+      "email_subject": {
+        "type": "string",
+        "required": true,
+        "description": "Subject line of email"
+      },
+      "email_body": {
+        "type": "string",
+        "required": true,
+        "description": "Body content of email"
+      }
+    },
+    "tags": ["email", "notification", "communication"],
+    "use_cases": [
+      "Send daily report emails",
+      "Notify team of system alerts",
+      "Send confirmation emails"
+    ]
+  }
+}

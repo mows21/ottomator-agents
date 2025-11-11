@@ -1,0 +1,105 @@
+{
+  "name": "API Call Workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "trigger-node",
+      "name": "When clicking 'Test workflow'",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "={{http_method}}",
+        "url": "={{api_url}}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": "={{headers}}"
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": "={{body_params}}"
+        },
+        "options": {}
+      },
+      "id": "http-node",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Process the API response\nconst response = $input.all();\nconst processedData = response.map(item => ({\n  ...item.json,\n  processed_at: new Date().toISOString()\n}));\n\nreturn processedData;"
+      },
+      "id": "code-node",
+      "name": "Process Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300]
+    }
+  ],
+  "connections": {
+    "When clicking 'Test workflow'": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Process Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "metadata": {
+    "description": "Make HTTP requests to REST APIs",
+    "category": "integration",
+    "parameters": {
+      "api_url": {
+        "type": "string",
+        "required": true,
+        "description": "Full URL of the API endpoint"
+      },
+      "http_method": {
+        "type": "string",
+        "required": true,
+        "description": "HTTP method (GET, POST, PUT, DELETE)",
+        "default": "GET"
+      },
+      "headers": {
+        "type": "object",
+        "required": false,
+        "description": "HTTP headers as key-value pairs"
+      },
+      "body_params": {
+        "type": "object",
+        "required": false,
+        "description": "Request body parameters"
+      }
+    },
+    "tags": ["api", "http", "rest", "integration"],
+    "use_cases": [
+      "Call external APIs",
+      "Integrate with third-party services",
+      "Fetch data from web services"
+    ]
+  }
+}

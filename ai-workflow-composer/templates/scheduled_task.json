@@ -1,0 +1,112 @@
+{
+  "name": "Scheduled Task Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "={{cron_schedule || '0 9 * * *'}}"
+            }
+          ]
+        }
+      },
+      "id": "cron-node",
+      "name": "Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Execute scheduled task\\nconst now = new Date();\\nconst taskData = {\\n  execution_time: now.toISOString(),\\n  task_name: '{{task_name}}',\\n  task_type: '{{task_type}}'\\n};\\n\\nreturn [taskData];"
+      },
+      "id": "execute-node",
+      "name": "Execute Task",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "table": "{{log_table}}",
+        "columns": "execution_time,task_name,task_type,status",
+        "options": {}
+      },
+      "id": "log-node",
+      "name": "Log Execution",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [650, 300],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "PostgreSQL account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule": {
+      "main": [
+        [
+          {
+            "node": "Execute Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Task": {
+      "main": [
+        [
+          {
+            "node": "Log Execution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "metadata": {
+    "description": "Run tasks on a schedule using cron",
+    "category": "automation",
+    "parameters": {
+      "cron_schedule": {
+        "type": "string",
+        "required": true,
+        "description": "Cron expression for schedule (e.g., '0 9 * * *' for 9 AM daily)",
+        "default": "0 9 * * *"
+      },
+      "task_name": {
+        "type": "string",
+        "required": true,
+        "description": "Name of the scheduled task"
+      },
+      "task_type": {
+        "type": "string",
+        "required": true,
+        "description": "Type of task to execute"
+      },
+      "log_table": {
+        "type": "string",
+        "required": false,
+        "description": "Database table for execution logs",
+        "default": "task_logs"
+      }
+    },
+    "tags": ["schedule", "cron", "automation", "recurring"],
+    "use_cases": [
+      "Daily report generation",
+      "Periodic data synchronization",
+      "Scheduled maintenance tasks"
+    ]
+  }
+}

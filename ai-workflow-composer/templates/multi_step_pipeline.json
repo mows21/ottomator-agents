@@ -1,0 +1,153 @@
+{
+  "name": "Multi-Step Pipeline Workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "trigger-node",
+      "name": "When clicking 'Test workflow'",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{data_source_url}}",
+        "options": {}
+      },
+      "id": "fetch-node",
+      "name": "Step 1: Fetch Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Step 2: Transform data\nconst items = $input.all();\nconst transformed = items.map(item => ({\n  ...item.json,\n  transformed: true,\n  step: 'transformation'\n}));\n\nreturn transformed;"
+      },
+      "id": "transform-node",
+      "name": "Step 2: Transform",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "table": "={{target_table}}",
+        "columns": "*",
+        "options": {}
+      },
+      "id": "store-node",
+      "name": "Step 3: Store",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [850, 300],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "PostgreSQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "channel": "={{notification_channel}}",
+        "text": "Pipeline completed: {{pipeline_name}}"
+      },
+      "id": "notify-node",
+      "name": "Step 4: Notify",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2,
+      "position": [1050, 300],
+      "credentials": {
+        "slackApi": {
+          "id": "1",
+          "name": "Slack account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "When clicking 'Test workflow'": {
+      "main": [
+        [
+          {
+            "node": "Step 1: Fetch Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Step 1: Fetch Data": {
+      "main": [
+        [
+          {
+            "node": "Step 2: Transform",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Step 2: Transform": {
+      "main": [
+        [
+          {
+            "node": "Step 3: Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Step 3: Store": {
+      "main": [
+        [
+          {
+            "node": "Step 4: Notify",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "metadata": {
+    "description": "Multi-step data pipeline with fetch, transform, store, notify",
+    "category": "pipeline",
+    "parameters": {
+      "pipeline_name": {
+        "type": "string",
+        "required": true,
+        "description": "Name of the pipeline"
+      },
+      "data_source_url": {
+        "type": "string",
+        "required": true,
+        "description": "URL to fetch data from"
+      },
+      "target_table": {
+        "type": "string",
+        "required": true,
+        "description": "Database table to store results"
+      },
+      "notification_channel": {
+        "type": "string",
+        "required": true,
+        "description": "Slack channel for notifications"
+      }
+    },
+    "tags": ["pipeline", "etl", "multi-step", "automation"],
+    "use_cases": [
+      "ETL data pipelines",
+      "Multi-step automation workflows",
+      "Complex data processing"
+    ]
+  }
+}

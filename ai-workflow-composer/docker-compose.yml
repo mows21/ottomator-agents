@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  # AI Workflow Composer API
+  workflow-composer:
+    build: .
+    container_name: ai-workflow-composer
+    ports:
+      - "8001:8001"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - N8N_BASE_URL=http://n8n:5678
+      - N8N_USERNAME=${N8N_USERNAME:-admin}
+      - N8N_PASSWORD=${N8N_PASSWORD:-admin123}
+      - API_BEARER_TOKEN=${API_BEARER_TOKEN}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+    depends_on:
+      - n8n
+    restart: unless-stopped
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - workflow-network
+
+  # n8n Workflow Automation
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_USERNAME:-admin}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD:-admin123}
+      - WEBHOOK_URL=http://n8n:5678/
+      - GENERIC_TIMEZONE=UTC
+    volumes:
+      - n8n_data:/home/node/.n8n
+    restart: unless-stopped
+    networks:
+      - workflow-network
+
+  # Optional: Streamlit UI
+  streamlit-ui:
+    build: .
+    container_name: workflow-composer-ui
+    ports:
+      - "8501:8501"
+    command: streamlit run ui/app.py --server.port 8501 --server.address 0.0.0.0
+    environment:
+      - API_BASE_URL=http://workflow-composer:8001
+      - API_BEARER_TOKEN=${API_BEARER_TOKEN}
+    depends_on:
+      - workflow-composer
+    restart: unless-stopped
+    networks:
+      - workflow-network
+
+volumes:
+  n8n_data:
+    driver: local
+
+networks:
+  workflow-network:
+    driver: bridge

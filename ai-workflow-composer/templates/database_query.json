@@ -1,0 +1,93 @@
+{
+  "name": "Database Query Workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "trigger-node",
+      "name": "When clicking 'Test workflow'",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{sql_query}}",
+        "options": {}
+      },
+      "id": "postgres-node",
+      "name": "Execute Query",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [450, 300],
+      "credentials": {
+        "postgres": {
+          "id": "1",
+          "name": "PostgreSQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.success}}",
+              "operation": "equals",
+              "value2": "true"
+            }
+          ]
+        }
+      },
+      "id": "if-node",
+      "name": "Check Success",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 300]
+    }
+  ],
+  "connections": {
+    "When clicking 'Test workflow'": {
+      "main": [
+        [
+          {
+            "node": "Execute Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Query": {
+      "main": [
+        [
+          {
+            "node": "Check Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "metadata": {
+    "description": "Execute PostgreSQL database queries",
+    "category": "database",
+    "parameters": {
+      "sql_query": {
+        "type": "string",
+        "required": true,
+        "description": "SQL query to execute"
+      }
+    },
+    "tags": ["database", "sql", "postgresql"],
+    "use_cases": [
+      "Fetch data from database",
+      "Update database records",
+      "Run scheduled database maintenance"
+    ]
+  }
+}

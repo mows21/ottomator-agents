@@ -1,0 +1,115 @@
+{
+  "name": "File Processing Workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "trigger-node",
+      "name": "When clicking 'Test workflow'",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "binaryPropertyName": "data",
+        "url": "={{file_url}}"
+      },
+      "id": "http-node",
+      "name": "Download File",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "operation": "fromFile",
+        "binaryPropertyName": "data",
+        "options": {
+          "delimiter": "={{delimiter || ','}}"
+        }
+      },
+      "id": "spreadsheet-node",
+      "name": "Parse CSV",
+      "type": "n8n-nodes-base.spreadsheetFile",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Transform data\nconst items = $input.all();\nconst transformed = items.map(item => ({\n  ...item.json,\n  processed_at: new Date().toISOString(),\n  source_file: '{{file_name}}'\n}));\n\nreturn transformed;"
+      },
+      "id": "code-node",
+      "name": "Transform Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 300]
+    }
+  ],
+  "connections": {
+    "When clicking 'Test workflow'": {
+      "main": [
+        [
+          {
+            "node": "Download File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download File": {
+      "main": [
+        [
+          {
+            "node": "Parse CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse CSV": {
+      "main": [
+        [
+          {
+            "node": "Transform Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "metadata": {
+    "description": "Download and process CSV/JSON files",
+    "category": "data",
+    "parameters": {
+      "file_url": {
+        "type": "string",
+        "required": true,
+        "description": "URL or path to the file"
+      },
+      "file_name": {
+        "type": "string",
+        "required": true,
+        "description": "Name of the file being processed"
+      },
+      "delimiter": {
+        "type": "string",
+        "required": false,
+        "description": "CSV delimiter character",
+        "default": ","
+      }
+    },
+    "tags": ["file", "csv", "processing", "data"],
+    "use_cases": [
+      "Process CSV reports",
+      "Import data from files",
+      "Transform file formats"
+    ]
+  }
+}
